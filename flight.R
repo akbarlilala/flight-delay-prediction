@@ -97,4 +97,53 @@ varImpPlot(rf_model,
            cex = 0.8,
            n.var = min(20, ncol(rf_model$importance))) 
 
+pdf("~/Desktop/variable_importance.pdf", width = 8, height = 6)
+varImpPlot(rf_model, 
+           main = "Variable Importance",
+           pch = 16, 
+           col = "darkblue", 
+           cex = 0.8,
+           n.var = min(20, ncol(rf_model$importance)))
+
+# Vorhersagen auf Test-Daten
+tree_preds <- predict(tree_model, test_filtered, type = "class")
+
+# Konfusionsmatrix
+tree_conf_matrix <- table(
+  Predicted = tree_preds,
+  Actual    = test_filtered$SignificantDelay
+)
+print(tree_conf_matrix)
+
+# Genauigkeit
+accuracy_tree <- sum(diag(tree_conf_matrix)) / sum(tree_conf_matrix)
+cat("Decision Tree Accuracy:", round(accuracy_tree * 100, 2), "%\n")
+
+
+# Generalized Linear Model (GLM) 
+
+glm_model <- glm(
+  SignificantDelay ~ Marketing_Airline_Network + Origin + Dest + DepHour,
+  data = train_filtered,
+  family = binomial(link = "logit")
+)
+
+# Predict probabilities
+pred_probs_glm <- predict(glm_model, newdata = test_filtered, type = "response")
+
+# Convert probabilities to class labels
+pred_glm <- ifelse(pred_probs_glm > 0.5, 1, 0)
+pred_glm <- as.factor(pred_glm)
+
+# Confusion matrix
+conf_matrix_glm <- table(Predicted = pred_glm, Actual = test_filtered$SignificantDelay)
+print(conf_matrix_glm)
+
+# Accuracy
+accuracy_glm <- sum(diag(conf_matrix_glm)) / sum(conf_matrix_glm)
+cat("GLM Accuracy:", round(accuracy_glm * 100, 2), "%\n")
+
+
+
+
 
